@@ -11,6 +11,7 @@ import (
 var (
 	chkSum   string
 	imageExt string
+	gpgKey   string
 )
 
 // PullImages pulls a remote image locally and stores in the library.
@@ -57,5 +58,8 @@ func pullImages(urls []*url.URL) error {
 
 func init() {
 	PullImages.PersistentFlags().StringVar(&chkSum, "chksum", "", "Verify the checksum of the image after download.")
+	PullImages.PersistentFlags().StringVar(&gpgKey, "gpgkey", "", "Encrypt image locally with personal GPG Key.")
+
 	ListImages.PersistentFlags().StringVar(&imageExt, "imgext", "iso", "Filter images by image extension.")
+
 }
