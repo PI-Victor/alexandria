@@ -1,0 +1,20 @@
+{
+  "name": "alexandria",
+  "homepage": "https://github.com/pi-victor/alexandria",
+  "authors": [
+    "PI-Victor <palade.ionut@gmail.com>"
+  ],
+  "description": "",
+  "main": "",
+  "license": "Apache",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "foundation": "^5.5.3"
+  }
+}
