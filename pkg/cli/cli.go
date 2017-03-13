@@ -2,16 +2,23 @@ package cli
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
+	"os"
+	"path"
+	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
 var (
-	chkSum   string
-	imageExt string
-	gpgKey   string
+	verify  string
+	filter  string
+	encrypt string
+	// TODO: see how an image signing might work in this case.
+	sign string
 )
 
 // PullImages pulls a remote image locally and stores in the library.
@@ -47,21 +54,76 @@ var ListImages = &cobra.Command{
 }
 
 func listImages() error {
-	fmt.Println("listing images not implemented yet")
+	logrus.Info("Not implemented yet")
 	return nil
 }
 
-func pullImages(urls []*url.URL) error {
-	fmt.Println("pulling images not implemented yet")
+// pullImages copies a remote image file locally.
+// if this fails, it will only log the error to let the user know.
+func pullImages(urls []*url.URL) {
+	err := make(chan error)
+	msg := make(chan string)
+
+	for _, u := range urls {
+		go func(u *url.URL) {
+			if e := downloadFile(msg, u.String()); e != nil {
+				err <- e
+			}
+		}(u)
+		logrus.Warn(<-msg)
+		logrus.Warn(<-err)
+	}
+
+}
+
+func downloadFile(msg chan string, dlURL string) error {
+	var err error
+	tokens := strings.Split(dlURL, "/")
+	fileName := tokens[len(tokens)-1]
+	configDir := os.Getenv("HOME")
+
+	if configDir == "" {
+		configDir, err = os.Getwd()
+		if err != nil {
+			return err
+		}
+	}
+	filePath := path.Join(configDir, ".alexandria", "images")
+	file := path.Join(filePath, fileName)
+	if _, err = os.Stat(filePath); os.IsNotExist(err) {
+		if err = os.MkdirAll(filePath, 0755); err != nil {
+			return err
+		}
+	} else if err != nil {
+		return err
+	}
+	fh, err := os.Create(file)
+	if err != nil {
+		return err
+	}
+	defer fh.Close()
+
+	response, err := http.Get(dlURL)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	logrus.Info("Downloading %s...", dlURL)
+	n, err := io.Copy(fh, response.Body)
+	if err != nil {
+		return err
+	}
+	logrus.Info(fh)
+	msg <- fmt.Sprintf("Downloading %d...", n)
 	return nil
 }
 
 func init() {
-	// NOTE: change this to --verify
-	PullImages.PersistentFlags().StringVar(&chkSum, "chksum", "", "Verify the checksum of the image after download.")
-	// NOTE: change this to --encrypt
-	PullImages.PersistentFlags().StringVar(&gpgKey, "gpgkey", "", "Encrypt image locally with personal GPG Key.")
-	// NOTE: change this to --filter
-	ListImages.PersistentFlags().StringVar(&imageExt, "imgext", "iso", "Filter images by image extension.")
+	PullImages.PersistentFlags().StringVar(&verify, "verify", "", "Verify the checksum of the image after download.")
+	PullImages.PersistentFlags().StringVar(&encrypt, "encrypt", "", "Encrypt image locally with personal GPG Key.")
 
+	PullImages.PersistentFlags().StringVar(&sign, "sign", "", "Sign an image that you push to the library")
+
+	ListImages.PersistentFlags().StringVar(&filter, "filter", "iso", "Filter images by image extension.")
 }
