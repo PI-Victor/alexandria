@@ -57,9 +57,11 @@ func pullImages(urls []*url.URL) error {
 }
 
 func init() {
+	// NOTE: change this to --verify
 	PullImages.PersistentFlags().StringVar(&chkSum, "chksum", "", "Verify the checksum of the image after download.")
+	// NOTE: change this to --encrypt
 	PullImages.PersistentFlags().StringVar(&gpgKey, "gpgkey", "", "Encrypt image locally with personal GPG Key.")
-	// NOTE: change this to filter
+	// NOTE: change this to --filter
 	ListImages.PersistentFlags().StringVar(&imageExt, "imgext", "iso", "Filter images by image extension.")
 
 }
