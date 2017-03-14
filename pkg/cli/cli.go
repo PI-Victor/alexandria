@@ -109,13 +109,12 @@ func downloadFile(msg chan string, dlURL string) error {
 	}
 	defer response.Body.Close()
 
-	logrus.Info("Downloading %s...", dlURL)
+	msg <- fmt.Sprintf("Downloading %s...", dlURL)
 	n, err := io.Copy(fh, response.Body)
 	if err != nil {
 		return err
 	}
-	logrus.Info(fh)
-	msg <- fmt.Sprintf("Downloading %d...", n)
+	logrus.Info(n)
 	return nil
 }
 
