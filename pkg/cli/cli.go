@@ -66,6 +66,10 @@ func pullImages(urls []*url.URL) {
 
 	for _, u := range urls {
 		go func(u *url.URL) {
+			// TODO: remove error and just send a notification about
+			// the state of the download through a channel.
+			// we don't even need an err channel here, msg is enough
+			// since we don't fail when an image can't be downloaded.
 			if e := downloadFile(msg, u.String()); e != nil {
 				err <- e
 			}
