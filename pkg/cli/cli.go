@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
@@ -14,9 +15,10 @@ import (
 )
 
 var (
-	verify  string
-	filter  string
-	encrypt string
+	verify    string
+	filter    string
+	encrypt   string
+	overWrite bool
 	// TODO: see how an image signing might work in this case.
 	sign string
 )
@@ -61,72 +63,80 @@ func listImages() error {
 // pullImages copies a remote image file locally.
 // if this fails, it will only log the error to let the user know.
 func pullImages(urls []*url.URL) {
-	err := make(chan error)
-	msg := make(chan string)
+	e := make(chan error)
+	done := make(chan bool)
+	var err error
 
 	for _, u := range urls {
 		go func(u *url.URL) {
-			// TODO: remove error and just send a notification about
-			// the state of the download through a channel.
-			// we don't even need an err channel here, msg is enough
-			// since we don't fail when an image can't be downloaded.
-			if e := downloadFile(msg, u.String()); e != nil {
-				err <- e
-			}
+			downloadFile(u.String(), done, e)
 		}(u)
-		logrus.Warn(<-msg)
-		logrus.Warn(<-err)
-	}
 
+		if err != nil {
+			logrus.Warn(<-e)
+			continue
+		}
+		<-done
+	}
 }
 
-func downloadFile(msg chan string, dlURL string) error {
-	var err error
+func downloadFile(dlURL string, done chan bool, err chan error) {
+	// TODO: clean this up a bit.
+	var e error
+	var fh *os.File
 	tokens := strings.Split(dlURL, "/")
 	fileName := tokens[len(tokens)-1]
 	configDir := os.Getenv("HOME")
 
 	if configDir == "" {
-		configDir, err = os.Getwd()
-		if err != nil {
-			return err
+		configDir, e = os.Getwd()
+		if e != nil {
+			err <- e
 		}
 	}
 	filePath := path.Join(configDir, ".alexandria", "images")
 	file := path.Join(filePath, fileName)
-	if _, err = os.Stat(filePath); os.IsNotExist(err) {
-		if err = os.MkdirAll(filePath, 0755); err != nil {
-			return err
+	if _, e = os.Stat(filePath); os.IsNotExist(e) {
+		if e = os.MkdirAll(filePath, 0755); e != nil {
+			err <- e
 		}
-	} else if err != nil {
-		return err
+	} else if e != nil {
+		err <- e
 	}
-	fh, err := os.Create(file)
-	if err != nil {
-		return err
+	_, e = os.Stat(filepath.Join(filePath, file))
+	if e == nil && !overWrite {
+		err <- fmt.Errorf("Image %s already exists, provide --overwrite flag to overwrite", file)
+	}
+	if !os.IsNotExist(e) {
+		err <- e
+	}
+
+	fh, e = os.Create(file)
+	if e != nil {
+		err <- e
 	}
 	defer fh.Close()
 
-	response, err := http.Get(dlURL)
-	if err != nil {
-		return err
+	logrus.Infof("Downloading %s...", fileName)
+	response, e := http.Get(dlURL)
+	if e != nil {
+		err <- e
 	}
 	defer response.Body.Close()
 
-	msg <- fmt.Sprintf("Downloading %s...", dlURL)
-	n, err := io.Copy(fh, response.Body)
-	if err != nil {
-		return err
+	n, e := io.Copy(fh, response.Body)
+	if e != nil {
+		err <- e
 	}
-	logrus.Info(n)
-	return nil
+	logrus.Infof("Copied %d to %s", n, filePath)
+	done <- true
 }
 
 func init() {
 	PullImages.PersistentFlags().StringVar(&verify, "verify", "", "Verify the checksum of the image after download.")
 	PullImages.PersistentFlags().StringVar(&encrypt, "encrypt", "", "Encrypt image locally with personal GPG Key.")
-
 	PullImages.PersistentFlags().StringVar(&sign, "sign", "", "Sign an image that you push to the library")
+	PullImages.PersistentFlags().BoolVar(&overWrite, "overwrite", false, "Overwrite images already in the library")
 
 	ListImages.PersistentFlags().StringVar(&filter, "filter", "iso", "Filter images by image extension.")
 }
