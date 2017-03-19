@@ -25,7 +25,7 @@ var (
 // PullImages pulls a remote image locally and stores in the library.
 var PullImages = &cobra.Command{
 	Use:   "pull",
-	Short: "pulls one or more images from a remote location and stores it locally",
+	Short: "Download one or more images from a remote location and stores it locally",
 	Example: `alexactl pull https://remotewebsite.com/remote.iso
 https://remotewebsite2.com/remote2.iso https://remotewebsite3.com/remote3.iso
 `,
@@ -47,7 +47,7 @@ https://remotewebsite2.com/remote2.iso https://remotewebsite3.com/remote3.iso
 // ListImages lists all available images in the library.
 var ListImages = &cobra.Command{
 	Use:     "list",
-	Short:   "lists all available images from the library",
+	Short:   "Lists all available images from the library",
 	Example: "alexactl list",
 	Run: func(cmd *cobra.Command, args []string) {
 		listImages()
@@ -56,12 +56,40 @@ var ListImages = &cobra.Command{
 
 // Image lists all available images in the library.
 var Image = &cobra.Command{
-	Use:     "image",
-	Short:   "manipulate images",
+	Use: "image",
+	// TODO: change this
+	Short:   "Manipulate images",
 	Example: "alexactl image",
 	Run: func(cmd *cobra.Command, args []string) {
 		imageInfo()
 	},
+}
+
+// ImportImages handles image importing into the library.
+var ImportImages = &cobra.Command{
+	Use:     "import",
+	Short:   "Import local images into the library",
+	Example: "alexactl pull /abs/path/to/file.iso",
+	Run: func(cmd *cobra.Command, args []string) {
+		for _, image := range args {
+			if err := imageIsValid(image); err != nil {
+				logrus.Error(err)
+				continue
+			}
+			if err := importImage(image); err != nil {
+				logrus.Errorf("Failed to import image into library: %s", err)
+				continue
+			}
+		}
+	},
+}
+
+func importImage(imageFullPath string) error {
+	return nil
+}
+
+func imageIsValid(imageFullPath string) error {
+	return nil
 }
 
 func imageInfo() error {
@@ -147,7 +175,7 @@ func downloadFile(dlURL string, wg *sync.WaitGroup) {
 func init() {
 	PullImages.PersistentFlags().BoolVar(&overWrite, "overwrite", false, "Overwrite images already in the library")
 
-	ListImages.PersistentFlags().StringVar(&filter, "filter", "iso", "Filter images by image extension.")
+	ListImages.PersistentFlags().StringVar(&filter, "filter", "", "Filter images by image extension.")
 
 	Image.PersistentFlags().StringVar(&verify, "verify", "", "Verify image checksum.")
 	Image.PersistentFlags().StringVar(&encrypt, "encrypt", "", "Encrypt image locally with personal GPG Key.")

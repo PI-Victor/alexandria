@@ -22,6 +22,7 @@ library.
 func main() {
 	rootCmd.AddCommand(cli.PullImages)
 	rootCmd.AddCommand(cli.ListImages)
+	rootCmd.AddCommand(cli.ImportImages)
 	rootCmd.AddCommand(cli.Image)
 	rootCmd.Execute()
 }
