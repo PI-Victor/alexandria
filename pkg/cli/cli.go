@@ -1,14 +1,13 @@
 package cli
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -63,73 +62,71 @@ func listImages() error {
 // pullImages copies a remote image file locally.
 // if this fails, it will only log the error to let the user know.
 func pullImages(urls []*url.URL) {
-	e := make(chan error)
-	done := make(chan bool)
-	var err error
+	var wg sync.WaitGroup
 
 	for _, u := range urls {
-		go func(u *url.URL) {
-			downloadFile(u.String(), done, e)
-		}(u)
 
-		if err != nil {
-			logrus.Warn(<-e)
-			continue
-		}
-		<-done
+		wg.Add(1)
+		go func(u *url.URL) {
+			downloadFile(u.String(), &wg)
+		}(u)
 	}
+	wg.Wait()
 }
 
-func downloadFile(dlURL string, done chan bool, err chan error) {
+func downloadFile(dlURL string, wg *sync.WaitGroup) {
+	defer wg.Done()
 	// TODO: clean this up a bit.
-	var e error
+	var err error
 	var fh *os.File
 	tokens := strings.Split(dlURL, "/")
 	fileName := tokens[len(tokens)-1]
 	configDir := os.Getenv("HOME")
 
 	if configDir == "" {
-		configDir, e = os.Getwd()
-		if e != nil {
-			err <- e
+		configDir, err = os.Getwd()
+		if err != nil {
+			logrus.Error(err)
 		}
 	}
 	filePath := path.Join(configDir, ".alexandria", "images")
 	file := path.Join(filePath, fileName)
-	if _, e = os.Stat(filePath); os.IsNotExist(e) {
-		if e = os.MkdirAll(filePath, 0755); e != nil {
-			err <- e
+	if _, err = os.Stat(filePath); os.IsNotExist(err) {
+		if err = os.MkdirAll(filePath, 0755); err != nil {
+			logrus.Error(err)
 		}
-	} else if e != nil {
-		err <- e
+	} else if err != nil {
+		logrus.Error(err)
 	}
-	_, e = os.Stat(filepath.Join(filePath, file))
-	if e == nil && !overWrite {
-		err <- fmt.Errorf("Image %s already exists, provide --overwrite flag to overwrite", file)
+	_, err = os.Stat(file)
+
+	if err == nil && !overWrite {
+		logrus.Errorf("Image %s already exists, provide --overwrite flag to overwrite", file)
+		return
 	}
-	if !os.IsNotExist(e) {
-		err <- e
+	if err == nil && overWrite {
+		logrus.Warnf("Found %s, overwriting...", file)
 	}
 
-	fh, e = os.Create(file)
-	if e != nil {
-		err <- e
+	fh, err = os.Create(file)
+	if err != nil {
+		logrus.Error(err)
 	}
 	defer fh.Close()
 
 	logrus.Infof("Downloading %s...", fileName)
-	response, e := http.Get(dlURL)
-	if e != nil {
-		err <- e
+	response, err := http.Get(dlURL)
+	if err != nil {
+		logrus.Error(err)
 	}
 	defer response.Body.Close()
 
-	n, e := io.Copy(fh, response.Body)
-	if e != nil {
-		err <- e
+	n, err := io.Copy(fh, response.Body)
+	if err != nil {
+		logrus.Error(err)
 	}
-	logrus.Infof("Copied %d to %s", n, filePath)
-	done <- true
+	mbCopied := (float64(n) / 1024) / 1024
+	logrus.Infof("Copied %s     %.2f MB", fileName, mbCopied)
 }
 
 func init() {
