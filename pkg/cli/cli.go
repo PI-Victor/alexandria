@@ -149,7 +149,7 @@ func init() {
 
 	ListImages.PersistentFlags().StringVar(&filter, "filter", "iso", "Filter images by image extension.")
 
-	ImageInfo.PersistentFlags().StringVar(&verify, "verify", "", "Verify image checksum.")
-	ImageInfo.PersistentFlags().StringVar(&encrypt, "encrypt", "", "Encrypt image locally with personal GPG Key.")
-	ImageInfo.PersistentFlags().StringVar(&sign, "sign", "", "Sign an image that you push to the library")
+	Image.PersistentFlags().StringVar(&verify, "verify", "", "Verify image checksum.")
+	Image.PersistentFlags().StringVar(&encrypt, "encrypt", "", "Encrypt image locally with personal GPG Key.")
+	Image.PersistentFlags().StringVar(&sign, "sign", "", "Sign an image that you push to the library")
 }
