@@ -48,10 +48,25 @@ https://remotewebsite2.com/remote2.iso https://remotewebsite3.com/remote3.iso
 var ListImages = &cobra.Command{
 	Use:     "list",
 	Short:   "lists all available images from the library",
-	Example: "alexct list",
+	Example: "alexactl list",
 	Run: func(cmd *cobra.Command, args []string) {
 		listImages()
 	},
+}
+
+// Image lists all available images in the library.
+var Image = &cobra.Command{
+	Use:     "image",
+	Short:   "manipulate images",
+	Example: "alexactl image",
+	Run: func(cmd *cobra.Command, args []string) {
+		imageInfo()
+	},
+}
+
+func imageInfo() error {
+	logrus.Info("Not implemented yet")
+	return nil
 }
 
 func listImages() error {
