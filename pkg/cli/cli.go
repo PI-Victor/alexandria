@@ -26,7 +26,7 @@ var (
 var PullImages = &cobra.Command{
 	Use:   "pull",
 	Short: "pulls one or more images from a remote location and stores it locally",
-	Example: `alexctl pull https://remotewebsite.com/remote.iso
+	Example: `alexactl pull https://remotewebsite.com/remote.iso
 https://remotewebsite2.com/remote2.iso https://remotewebsite3.com/remote3.iso
 `,
 	Run: func(cmd *cobra.Command, args []string) {

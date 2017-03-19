@@ -9,10 +9,11 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "alexctl",
-	Short: "alexctl - CLI control alexandria libary images",
-	Example: ` alexctl provides functionality of manipulating images stored in the Alexandria library.
-  `,
+	Use:   "alexactl",
+	Short: "alexactl - CLI control Alexandria libary images",
+	Example: `alexactl provides functionality of manipulating images stored in the Alexandria image
+library.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cmd.Help()
 	},
