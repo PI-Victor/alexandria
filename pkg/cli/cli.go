@@ -145,10 +145,11 @@ func downloadFile(dlURL string, wg *sync.WaitGroup) {
 }
 
 func init() {
-	PullImages.PersistentFlags().StringVar(&verify, "verify", "", "Verify the checksum of the image after download.")
-	PullImages.PersistentFlags().StringVar(&encrypt, "encrypt", "", "Encrypt image locally with personal GPG Key.")
-	PullImages.PersistentFlags().StringVar(&sign, "sign", "", "Sign an image that you push to the library")
 	PullImages.PersistentFlags().BoolVar(&overWrite, "overwrite", false, "Overwrite images already in the library")
 
 	ListImages.PersistentFlags().StringVar(&filter, "filter", "iso", "Filter images by image extension.")
+
+	ImageInfo.PersistentFlags().StringVar(&verify, "verify", "", "Verify image checksum.")
+	ImageInfo.PersistentFlags().StringVar(&encrypt, "encrypt", "", "Encrypt image locally with personal GPG Key.")
+	ImageInfo.PersistentFlags().StringVar(&sign, "sign", "", "Sign an image that you push to the library")
 }
