@@ -28,5 +28,5 @@ func init() {
 	// NOTE: using $HOME might not be a good idea.
 	viper.AddConfigPath("$HOME/.alexandria")
 	viper.SetConfigFile("config")
-	logrus.SetLevel(logrus.InfoLevel)
+	logrus.SetLevel(logrus.DebugLevel)
 }
