@@ -12,5 +12,8 @@ func main() {
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Test")
+}
 
+func getRegistryManifests() error {
+	return nil
 }
