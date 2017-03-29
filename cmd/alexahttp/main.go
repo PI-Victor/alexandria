@@ -1,17 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
+
+	"github.com/Sirupsen/logrus"
+
+	"github.com/PI-Victor/alexandria/pkg/server"
 )
 
 func main() {
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":8080", nil)
-}
+	logrus.SetLevel(logrus.DebugLevel)
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Test")
+	app := server.App{}
+
+	http.HandleFunc("/", app.Index)
+
+	logrus.Info("Server started...")
+	http.ListenAndServe(":8080", nil)
 }
 
 func getRegistryManifests() error {
