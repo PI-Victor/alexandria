@@ -12,13 +12,16 @@ type App struct{}
 
 // Index is the / of the app
 func (a *App) Index(w http.ResponseWriter, r *http.Request) {
-	Title := "TEEEEEEEEEEEEEEEEESSSSSSSTTTTTTTTT"
+	title := struct {
+		Title string
+	}{
+		Title: "TEEEEEEEEEEEEEEEEESSSSSSSTTTTTTTTT",
+	}
 	t, err := template.ParseFiles("templates/index.html")
 	if err != nil {
 		logrus.Error(err)
 	}
-	w.Header().Set("Content-type", "text/html")
-	if err := t.Execute(w, Title); err != nil {
+	if err := t.ExecuteTemplate(w, "templates/index.html", title); err != nil {
 		logrus.Errorln(err)
 	}
 }
