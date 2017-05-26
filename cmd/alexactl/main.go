@@ -29,7 +29,12 @@ func main() {
 
 func init() {
 	// NOTE: using $HOME might not be a good idea.
-	viper.AddConfigPath("$HOME/.alexandria")
-	viper.SetConfigFile("config")
 	logrus.SetLevel(logrus.DebugLevel)
+
+	viper.SetConfigFile("config.yaml")
+	viper.AddConfigPath("/home/vpalade/.alexandria")
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		logrus.Errorf("Fatal error config file: %s \n", err)
+	}
 }

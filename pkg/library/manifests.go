@@ -1,6 +1,7 @@
 package library
 
 import (
+	"os"
 	"time"
 )
 
@@ -28,4 +29,8 @@ func createManifest() error {
 
 func retrieveManifest() error {
 	return nil
+}
+
+func manifestLocation() error {
+	if
 }
